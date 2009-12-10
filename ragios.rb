@@ -31,8 +31,10 @@ module Ragios
             @queue = :reaper
 
             def self.perform(host, status, message)
+                timestamp = Time.now.strftime('%s')
+
                 File.open('/tmp/nagios_foo', 'a') { |fd|
-                    fd.puts "#{host};#{status};#{foo}"
+                    fd.puts "[#{timestamp}] PROCESS_HOST_CHECK_RESULT;#{host};#{status};#{foo}"
                 }
             end
         end
@@ -41,8 +43,10 @@ module Ragios
             @queue = :reaper
 
             def self.perform(host, service, status, message)
+                timestamp = Time.now.strftime('%s')
+
                 File.open('/tmp/nagios_foo', 'a') { |fd|
-                    fd.puts "#{host};#{service};#{status};#{message}"
+                    fd.puts "[#{timestamp}] PROCESS_SERVICE_CHECK_RESULT;#{host};#{service};#{status};#{message}"
                 }
             end
         end
