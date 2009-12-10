@@ -6,13 +6,6 @@ require 'rubygems'
 require 'resque'
 require 'open3'
 
-@str_status = {
-    0 => "OK",
-    1 => "WARNING",
-    2 => "CRITICAL",
-    3 => "UNKNOWN"
-}
-
 module Ragios
     module Check
         include Ragios
@@ -29,7 +22,10 @@ module Ragios
             attr_accessor :host, :service, :queue
 
             def run(executable, *args)
-                #Resque.enqueue(self, @host, @service, executable, args)
+                # Have to call Resque::Job directly so that we can dynamically
+                # set the queue name rather than hardcoding it into the class
+                # definition
+                
                 Resque::Job.create(@queue, Ragios::Check::Exec, @host, @service, executable, args)
             end
 
@@ -37,7 +33,6 @@ module Ragios
                 args_string = args.join(' ')
                 stdin, stdout, stderr = Open3.popen3("#{executable} #{args_string}")
 
-                #Job.create(@queue, self, host, service, $?, stdout.read)
                 Resque.enqueue(Ragios::Reaper::ServiceCheck, host, service, $?, stdout.read())
             end
         end
