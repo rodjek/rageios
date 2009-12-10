@@ -36,3 +36,37 @@ namespace :resque do
     threads.each { |thread| thread.join }
   end
 end
+
+namespace :ragios do
+    task :setup do
+        require 'ragios'
+    end
+
+    task :reaper => :setup do
+        require 'resque'
+
+        worker = nil
+        queues = ["reaper"]
+
+        worker = Resque::Worker.new(*queues)
+        worker.very_verbose = ENV['DEBUG']
+
+        puts "*** Starting reaper #{worker}"
+
+        worker.work(1)
+    end
+
+    task :checker => :setup do
+        require 'resque'
+
+        worker = nil
+        queues = ["check"]
+
+        worker = Resque::Worker.new(*queues)
+        worker.very_verbose = ENV['DEBUG']
+
+        puts "*** Starting checker #{worker}"
+
+        worker.work(1)
+    end
+end
