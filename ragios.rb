@@ -31,19 +31,10 @@ module Ragios
         class Ragios::Check::Host
             @queue = :check
 
-            def self.perform(host, ip, count)
-                stdin, stdout, stderr = Open3.popen3("/bin/ping -c #{count} #{ip}")
+            def self.perform(host, ip, count, warn, crit)
+                stdin, stdout, stderr = Open3.popen3("/usr/lib/nagios/plugins/check_ping -H #{ip} -p #{count} -w #{warn}% -c #{crit}%")
 
-                # Say no to regular expressions!
-                data = stdout.readlines()
-                rta = data[-1].split('=')[1].split('/')[1]
-                lost = data[-2].split(',')[2].split('%')[0].strip
-
-                # Yeah, I'll add thresholds later...
-                status = 0
-
-                message = "OK - #{ip}: rta #{rta}, lost #{lost}%"
-                Resque.enqueue(Ragios::Reaper::HostCheck, host, status, message)
+                Resque.enqueue(Ragios::Reaper::HostCheck, host, $?, stdout.read)
             end
         end
     end
