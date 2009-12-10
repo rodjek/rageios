@@ -70,3 +70,18 @@ namespace :ragios do
         worker.work(1)
     end
 end
+
+begin
+    require 'jeweler'
+    Jeweler::Tasks.new do |gemspec|
+        gemspec.name = "ragios"
+        gemspec.summary = "Resque + Nagios == Win?"
+        gemspec.description = "Meh"
+        gemspec.email = "tim.sharpe@anchor.com.au"
+        gemspec.homepage = "http://github.com/rodjek/ragios"
+        gemspec.authors = ["Tim Sharpe"]
+    end
+rescue LoadError
+    puts "Jeweler not available. Install it with: sudo gem install jeweler"
+end
+
