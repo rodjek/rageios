@@ -22,20 +22,22 @@ module Ragios
         # r = Ragios::Check::Exec.new
         # r.host = "localhost"
         # r.service = "HTTP"
+        # r.queue = :check
         # r.run("/usr/lib/nagios/plugins/check_http", "-H", "localhost")
         #
         class Ragios::Check::Exec
-            attr_accessor :host, :service
-            @queue = :check
+            attr_accessor :host, :service, :queue
 
             def run(executable, *args)
-                Resque.enqueue(Ragios::Check::Exec, @host, @service, executable, args)
+                #Resque.enqueue(self, @host, @service, executable, args)
+                Resque::Job.create(@queue, Ragios::Check::Exec, @host, @service, executable, args)
             end
 
             def self.perform(host, service, executable, *args)
                 args_string = args.join(' ')
                 stdin, stdout, stderr = Open3.popen3("#{executable} #{args_string}")
 
+                #Job.create(@queue, self, host, service, $?, stdout.read)
                 Resque.enqueue(Ragios::Reaper::ServiceCheck, host, service, $?, stdout.read())
             end
         end
