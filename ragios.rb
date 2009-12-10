@@ -17,6 +17,12 @@ module Ragios
     module Check
         include Ragios
 
+        # Usage
+        # Resque.enqueue(Ragios::Check::Exec, <hostname>, <service description>, <plugin>, <arg1>, <arg2>, ... <argn>)
+        #
+        # i.e.
+        #
+        # Resque.enqueue(Ragios::Check::Exec, "localhost", "HTTP", "/usr/lib/nagios/plugins/check_http", "-H", "localhost")
         class Ragios::Check::Exec
             @queue = :check
 
@@ -28,6 +34,13 @@ module Ragios
             end
         end
 
+        # Usage
+        # Resque.enqueue(Ragios::Check::Host, <nagios hostname>, <ip>, <warning tuple>, <crit tuple>)
+        # The threshold tuples are in the form "<rta>,<packet loss>"
+        # 
+        # i.e.
+        #
+        # Resque.enqueue(Ragios::Check::Host, "localhost", "127.0.0.1", "1,2", "3,4")
         class Ragios::Check::Host
             @queue = :check
 
