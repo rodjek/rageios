@@ -11,7 +11,9 @@ module Ragios
         include Ragios
 
         class Ragios::Check::Exec
-            @queue = :check
+            def queue
+                :check
+            end
 
             def self.perform(host, service, executable, *args)
                 args_string = args.join(' ')
