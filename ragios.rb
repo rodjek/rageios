@@ -18,13 +18,19 @@ module Ragios
         include Ragios
 
         # Usage
-        # Resque.enqueue(Ragios::Check::Exec, <hostname>, <service description>, <plugin>, <arg1>, <arg2>, ... <argn>)
         #
-        # i.e.
+        # r = Ragios::Check::Exec.new
+        # r.host = "localhost"
+        # r.service = "HTTP"
+        # r.run("/usr/lib/nagios/plugins/check_http", "-H", "localhost")
         #
-        # Resque.enqueue(Ragios::Check::Exec, "localhost", "HTTP", "/usr/lib/nagios/plugins/check_http", "-H", "localhost")
         class Ragios::Check::Exec
+            attr_accessor :host, :service
             @queue = :check
+
+            def run(executable, *args)
+                Resque.enqueue(Ragios::Check::Exec, @host, @service, executable, args)
+            end
 
             def self.perform(host, service, executable, *args)
                 args_string = args.join(' ')
@@ -35,14 +41,19 @@ module Ragios
         end
 
         # Usage
-        # Resque.enqueue(Ragios::Check::Host, <nagios hostname>, <ip>, <warning tuple>, <crit tuple>)
-        # The threshold tuples are in the form "<rta>,<packet loss>"
         # 
-        # i.e.
+        # r = Ragios::Check::Host.new
+        # r.host = "localhost"
+        # r.ip = "127.0.0.1"
+        # r.run("1,2", "3,4")
         #
-        # Resque.enqueue(Ragios::Check::Host, "localhost", "127.0.0.1", "1,2", "3,4")
         class Ragios::Check::Host
+            attr_accessor :host, :ip
             @queue = :check
+
+            def run(warn, crit)
+                Resque.enqueue(Ragios::Check::Host, @host, @ip, warn, crit)
+            end
 
             def self.perform(host, ip, count, warn, crit)
                 stdin, stdout, stderr = Open3.popen3("/usr/lib/nagios/plugins/check_ping -H #{ip} -p #{count} -w #{warn}% -c #{crit}%")
