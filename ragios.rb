@@ -42,14 +42,14 @@ module Ragios
         # r = Ragios::Check::Host.new
         # r.host = "localhost"
         # r.ip = "127.0.0.1"
+        # r.queue = :check
         # r.run("1,2", "3,4")
         #
         class Ragios::Check::Host
-            attr_accessor :host, :ip
-            @queue = :check
+            attr_accessor :host, :ip, :queue
 
             def run(warn, crit)
-                Resque.enqueue(Ragios::Check::Host, @host, @ip, warn, crit)
+                Resque::Job.create(@queue, Ragios::Check::Host, @host, @ip, warn, crit)
             end
 
             def self.perform(host, ip, count, warn, crit)
