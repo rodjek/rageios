@@ -5,17 +5,20 @@
 
 Gem::Specification.new do |s|
   s.name = %q{ragios}
-  s.version = "0.0.0"
+  s.version = "0.0.1"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Tim Sharpe"]
-  s.date = %q{2009-12-10}
+  s.date = %q{2009-12-14}
+  s.default_executable = %q{check_ragios.rb}
   s.description = %q{Meh}
   s.email = %q{tim.sharpe@anchor.com.au}
+  s.executables = ["check_ragios.rb"]
   s.files = [
     "Rakefile",
      "VERSION",
-     "ragios.rb"
+     "lib/ragios.rb",
+     "ragios.gemspec"
   ]
   s.homepage = %q{http://github.com/rodjek/ragios}
   s.rdoc_options = ["--charset=UTF-8"]
