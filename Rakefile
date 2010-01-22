@@ -1,7 +1,7 @@
-namespace :ragios do
+namespace :rageios do
     task :reaper => :setup do
         require 'resque'
-        require 'ragios'
+        require 'rageios'
 
         worker = nil
         queues = ["reaper"]
@@ -32,11 +32,11 @@ end
 begin
     require 'jeweler'
     Jeweler::Tasks.new do |gemspec|
-        gemspec.name = "ragios"
+        gemspec.name = "rageios"
         gemspec.summary = "Resque + Nagios == Win?"
         gemspec.description = "Meh"
         gemspec.email = "tim.sharpe@anchor.com.au"
-        gemspec.homepage = "http://github.com/rodjek/ragios"
+        gemspec.homepage = "http://github.com/rodjek/rageios"
         gemspec.authors = ["Tim Sharpe"]
     end
 rescue LoadError

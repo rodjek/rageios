@@ -1,7 +1,3 @@
-# Yes, I know having this in 1 giant file is all sorts of not nice.  I'm not
-# that far through the book yet, mixins & modules are still a couple of
-# chapters away
-
 require 'rubygems'
 require 'resque'
 require 'open3'
@@ -56,34 +52,6 @@ module Ragios
                 stdin, stdout, stderr = Open3.popen3("/usr/lib/nagios/plugins/check_ping -H #{ip} -p #{count} -w #{warn}% -c #{crit}%")
 
                 Resque.enqueue(Ragios::Reaper::HostCheck, host, $?, stdout.read)
-            end
-        end
-    end
-
-    module Reaper
-        include Ragios
-
-        class Ragios::Reaper::HostCheck
-            @queue = :reaper
-
-            def self.perform(host, status, message)
-                timestamp = Time.now.strftime('%s')
-
-                File.open('/tmp/nagios_foo', 'a') { |fd|
-                    fd.puts "[#{timestamp}] PROCESS_HOST_CHECK_RESULT;#{host};#{status};#{message}"
-                }
-            end
-        end
-
-        class Ragios::Reaper::ServiceCheck
-            @queue = :reaper
-
-            def self.perform(host, service, status, message)
-                timestamp = Time.now.strftime('%s')
-
-                File.open('/tmp/nagios_foo', 'a') { |fd|
-                    fd.puts "[#{timestamp}] PROCESS_SERVICE_CHECK_RESULT;#{host};#{service};#{status};#{message}"
-                }
             end
         end
     end
