@@ -38,6 +38,10 @@ begin
         gemspec.email = "tim.sharpe@anchor.com.au"
         gemspec.homepage = "http://github.com/rodjek/rageios"
         gemspec.authors = ["Tim Sharpe"]
+        gemspec.add_dependency "redis"
+        gemspec.add_dependency "uuid"
+        gemspec.add_dependency "resque"
+        gemspec.add_dependency "popen4"
     end
 rescue LoadError
     puts "Jeweler not available. Install it with: sudo gem install jeweler"
