@@ -1,2 +1,5 @@
+require 'uuid'
+require 'redis'
+require 'resque'
+
 require 'rageios/check'
-require 'rageios/reaper'

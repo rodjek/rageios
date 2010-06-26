@@ -1,58 +1,54 @@
-require 'rubygems'
-require 'resque'
-require 'open3'
+module Rageios
+  module Check
+    include Rageios
 
-module Ragios
-    module Check
-        include Ragios
+    # Usage
+    #
+    # r = Ragios::Check::Exec.new
+    # r.queue = :check
+    # r.run "/usr/lib/nagios/plugins/check_http -H localhost"
+    class Rageios::Check::Exec
+      attr_accessor :queue, :redis_host, :redis_port
 
-        # Usage
-        #
-        # r = Ragios::Check::Exec.new
-        # r.host = "localhost"
-        # r.service = "HTTP"
-        # r.queue = :check
-        # r.run("/usr/lib/nagios/plugins/check_http", "-H", "localhost")
-        #
-        class Ragios::Check::Exec
-            attr_accessor :host, :service, :queue
+      def run(cmd)
+        # Have to call Resque::Job directly so that we can dynamically
+        # set the queue name rather than hardcoding it into the class
+        # definition
+        uuid = UUID.new.generate :compact
+        Resque::Job.create(@queue, Rageios::Check::Exec, uuid, @redis_host, @redis_port, cmd)
 
-            def run(executable, *args)
-                # Have to call Resque::Job directly so that we can dynamically
-                # set the queue name rather than hardcoding it into the class
-                # definition
-                
-                Resque::Job.create(@queue, Ragios::Check::Exec, @host, @service, executable, args)
-            end
+        # Give us an initial 0.1 second wait for the remote end to process the check
+        sleep 0.1
 
-            def self.perform(host, service, executable, *args)
-                args_string = args.join(' ')
-                stdin, stdout, stderr = Open3.popen3("#{executable} #{args_string}")
+        # Wait for the results to appear in Redis
+        namespace = "rageios:result:#{uuid}"
+        redis = Redis.new :host => @redis_host, :port => @redis_port
+        status = redis.get "#{namespace}:status"
+        while status.nil?
+          sleep 0.1
+          status = redis.get "#{namespace}:status"
+        end
+        output = redis.get "#{namespace}:output"
+        
+        # Clear the results from Redis
+        redis.del "#{namespace}:output" 
+        redis.del "#{namespace}:status" 
+        
+        {:status => status.to_i, :output => output}
+      end
 
-                Resque.enqueue(Ragios::Reaper::ServiceCheck, host, service, $?, stdout.read())
-            end
+      def self.perform(uuid, redis_host, redis_port, command)
+        output = ""
+        status = POpen4::popen4(command) do |stdout, stderr, stdin, pid|
+          stdin.close
+          output = stdout.read.strip
         end
 
-        # Usage
-        # 
-        # r = Ragios::Check::Host.new
-        # r.host = "localhost"
-        # r.ip = "127.0.0.1"
-        # r.queue = :check
-        # r.run("1,2", "3,4")
-        #
-        class Ragios::Check::Host
-            attr_accessor :host, :ip, :queue
-
-            def run(warn, crit)
-                Resque::Job.create(@queue, Ragios::Check::Host, @host, @ip, warn, crit)
-            end
-
-            def self.perform(host, ip, count, warn, crit)
-                stdin, stdout, stderr = Open3.popen3("/usr/lib/nagios/plugins/check_ping -H #{ip} -p #{count} -w #{warn}% -c #{crit}%")
-
-                Resque.enqueue(Ragios::Reaper::HostCheck, host, $?, stdout.read)
-            end
-        end
+        namespace = "rageios:result:#{uuid}"
+        redis = Redis.new :host => redis_host, :port => redis_port
+        redis.set "#{namespace}:output", output 
+        redis.set "#{namespace}:status", status.exitstatus 
+      end
     end
+  end
 end
